@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Prazos - Google Sheets API</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- jsPDF -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- jsPDF AutoTable -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <!-- SheetJS para exportação Excel -->
+  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <style>
+    body { background: #f9fafb; }
+    .kpi-card { border-radius: 12px; box-shadow: 0 2px 6px #0001; background: #fff; padding: 1rem 1.5rem; text-align: center; margin-bottom: 1rem; }
+    .kpi-value { font-size: 2.1rem; font-weight: bold; color: #007bff; }
+    .kpi-label { color: #666; font-size: 1rem; letter-spacing: .5px; }
+    .dashboard-title { letter-spacing: 1px; font-weight: bold; color: #374151; }
+    .action-btn { min-width: 150px; }
+    .filter-label { font-weight: 500; color: #444; }
+    .search-bar { max-width: 350px; }
+    .table th, .table td { vertical-align: middle !important; }
+    .table-responsive { max-height: 440px; overflow-y: auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 6px #0001; padding: 1rem; }
+    .chart-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 6px #0001; padding: 1.5rem; margin-bottom: 1.5rem; max-width: 480px; margin-left: auto; margin-right: auto; }
+    #chart-modalidade, #chart-status { max-width: 360px; max-height: 360px; margin: 0 auto; display: block; }
+    @media (max-width: 600px) {
+      .chart-card { max-width: 99vw; padding: 0.5rem; }
+      #chart-modalidade, #chart-status { max-width: 95vw; }
+    }
+    #loading-overlay {
+      position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(255,255,255,.8); z-index: 9999;
+      display: flex; align-items: center; justify-content: center; font-size: 2rem; color:#007bff; font-weight: bold; display: none;
+    }
+    .assinatura {
+      font-size: 0.95rem;
+      color: #888;
+      text-align: right;
+      margin-top: 1.5rem;
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.2px;
+      font-family: 'Segoe UI', 'Arial', 'Helvetica Neue', Arial, Helvetica, sans-serif;
+      opacity: 0.7;
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="loading-overlay">Carregando dados...</div>
+  <div class="container my-4">
+    <h2 class="dashboard-title mb-4 text-center">Dashboard Prazos (Google Sheets API)</h2>
+    <div class="row mb-3">
+      <div class="col-md-8 text-end d-flex justify-content-end align-items-end gap-2">
+        <button class="btn btn-primary action-btn" id="export-pdf" disabled>Exportar PDF completo</button>
+        <button class="btn btn-success action-btn" id="export-xlsx" disabled>Exportar dados filtrados (Excel)</button>
+        <button class="btn btn-secondary action-btn" id="atualizar-dados">Atualizar dados</button>
+      </div>
+    </div>
+    <!-- KPIs -->
+    <div class="row mb-3" id="kpi-row" style="display:none;">
+      <div class="col-md-4 col-6">
+        <div class="kpi-card">
+          <div class="kpi-value" id="kpi-total-processos">0</div>
+          <div class="kpi-label">Total de Processos</div>
+        </div>
+      </div>
+      <div class="col-md-4 col-6">
+        <div class="kpi-card">
+          <div class="kpi-value" id="kpi-total-modalidades">0</div>
+          <div class="kpi-label">Modalidades únicas</div>
+        </div>
+      </div>
+      <div class="col-md-4 col-6">
+        <div class="kpi-card">
+          <div class="kpi-value" id="kpi-total-status">0</div>
+          <div class="kpi-label">Status únicos</div>
+        </div>
+      </div>
+    </div>
+    <!-- Filtros -->
+    <div class="row align-items-end mb-3" id="filters-row" style="display:none;">
+      <div class="col-md-4 col-12 mb-2">
+        <label class="filter-label mb-1" for="modalidade-filter">Modalidade:</label>
+        <select class="form-select" id="modalidade-filter"><option value="">Todas</option></select>
+      </div>
+      <div class="col-md-4 col-12 mb-2">
+        <label class="filter-label mb-1" for="status-filter">Status:</label>
+        <select class="form-select" id="status-filter"><option value="">Todos</option></select>
+      </div>
+      <div class="col-md-4 col-12 mb-2">
+        <label class="filter-label mb-1" for="tipoobjeto-filter">Tipo objeto:</label>
+        <select class="form-select" id="tipoobjeto-filter"><option value="">Todos</option></select>
+      </div>
+      <div class="col-12 mb-2">
+        <label class="filter-label mb-1" for="search-bar">Busca rápida:</label>
+        <input class="form-control search-bar" type="text" id="search-bar" placeholder="Nº, Objeto, Modalidade, etc.">
+      </div>
+    </div>
+    <!-- Gráficos -->
+    <div class="row mb-3" id="charts-row" style="display:none;">
+      <div class="col-md-6 col-12">
+        <div class="chart-card">
+          <h6 class="text-center">Distribuição por Modalidade</h6>
+          <canvas id="chart-modalidade"></canvas>
+        </div>
+      </div>
+      <div class="col-md-6 col-12">
+        <div class="chart-card">
+          <h6 class="text-center">Distribuição por Status</h6>
+          <canvas id="chart-status"></canvas>
+        </div>
+      </div>
+    </div>
+    <!-- Tabela -->
+    <div class="row">
+      <div class="col-12">
+        <div class="table-responsive" id="table-div" style="display:none;">
+          <table class="table table-hover table-bordered table-sm align-middle" id="data-table">
+            <thead class="table-light"></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div id="no-data-msg" class="text-center text-muted mt-4" style="display:none;">
+          Nenhuma linha preenchida encontrada para os filtros selecionados.
+        </div>
+      </div>
+    </div>
+    <!-- Modal Detalhes -->
+    <div class="modal fade" id="detalhesModal" tabindex="-1" aria-labelledby="detalhesModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="detalhesModalLabel">Detalhes do Processo</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+          </div>
+          <div class="modal-body" id="detalhes-modal-body">
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="assinatura">
+      Programado por Iago Nunes, C-FISCON
+    </div>
+  </div>
+  <!-- SCRIPT PRINCIPAL (depois de todas as libs!) -->
+  <script>
+    // CONFIGURAÇÃO
+    const SHEET_ID = '1bO9DJwc76qX_VnABiP0cJ_OihOftlSF79-pf6DIn66k';
+    const SHEET_NAME = 'Plan3';
+    const API_KEY = 'AIzaSyCh7fyJXIjqlEJyvwrjghuEs-N6-PXxN2U';
+
+    // Variáveis globais
+    let allRows = [];
+    let columns = [];
+    let filteredRows = [];
+    let chartModalidade = null, chartStatus = null;
+
+    // Função global para o botão funcionar em qualquer contexto
+    window.verDetalhes = function(idx) {
+      const row = filteredRows[idx];
+      let html = `<table class="table table-bordered"><tbody>`;
+      columns.forEach(col => {
+        html += `<tr><th style="width:220px">${col}</th><td>${row[col] || "-"}</td></tr>`;
+      });
+      html += `</tbody></table>`;
+      document.getElementById('detalhes-modal-body').innerHTML = html;
+      let modal = new bootstrap.Modal(document.getElementById('detalhesModal'));
+      modal.show();
+    };
+
+    function exibirLoading(show) {
+      document.getElementById('loading-overlay').style.display = show ? "flex" : "none";
+    }
+
+    async function carregarDados() {
+      exibirLoading(true);
+      document.getElementById('no-data-msg').style.display = 'none';
+      document.getElementById('table-div').style.display = 'none';
+      try {
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}?key=${API_KEY}`;
+        const resp = await fetch(url);
+        const data = await resp.json();
+        if (!data.values || data.values.length < 2) throw new Error("Nenhum dado retornado");
+
+        columns = data.values[0].map(c=>c.trim());
+        // Só considera como processo se "Modalidade" estiver preenchido
+        allRows = data.values.slice(1)
+          .filter(row => row[0] && row[0].trim() !== "")
+          .map(row => {
+            let obj = {};
+            columns.forEach((col, i) => obj[col] = row[i] || "");
+            return obj;
+          });
+
+        preencherFiltros();
+        document.getElementById('kpi-row').style.display = "";
+        document.getElementById('filters-row').style.display = "";
+        document.getElementById('charts-row').style.display = "";
+        document.getElementById('table-div').style.display = "";
+        document.getElementById('export-pdf').disabled = false;
+        document.getElementById('export-xlsx').disabled = false;
+        document.getElementById('modalidade-filter').value = "";
+        document.getElementById('tipoobjeto-filter').value = "";
+        document.getElementById('status-filter').value = "";
+        document.getElementById('search-bar').value = "";
+        filtrarDados();
+      } catch(e) {
+        document.getElementById('no-data-msg').style.display = '';
+        document.getElementById('no-data-msg').textContent = "Erro ao buscar dados: " + e.message;
+      }
+      exibirLoading(false);
+    }
+
+    function unique(arr) {
+      return [...new Set(arr.filter(x=>x && x.trim()!==""))];
+    }
+
+    function preencherFiltros() {
+      // Modalidade
+      const modalidadeFilter = document.getElementById('modalidade-filter');
+      modalidadeFilter.innerHTML = `<option value="">Todas</option>`;
+      let modalidadesUnicas = unique(allRows.map(r=>r['Modalidade']));
+      modalidadesUnicas.forEach(m => modalidadeFilter.innerHTML += `<option value="${m}">${m}</option>`);
+      // Status
+      const statusFilter = document.getElementById('status-filter');
+      statusFilter.innerHTML = `<option value="">Todos</option>`;
+      let statusUnicos = unique(allRows.map(r=>r['Status atual']));
+      statusUnicos.forEach(s => statusFilter.innerHTML += `<option value="${s}">${s}</option>`);
+      // tipo objeto
+      const tipoObjetoFilter = document.getElementById('tipoobjeto-filter');
+      tipoObjetoFilter.innerHTML = `<option value="">Todos</option>`;
+      let tipoObjetoUnicos = unique(allRows.map(r=>r['tipo objeto']));
+      tipoObjetoUnicos.forEach(o => tipoObjetoFilter.innerHTML += `<option value="${o}">${o}</option>`);
+    }
+
+    ['modalidade-filter','tipoobjeto-filter','status-filter'].forEach(id => {
+      document.getElementById(id).addEventListener('change', filtrarDados);
+    });
+    document.getElementById('search-bar').addEventListener('input', filtrarDados);
+
+    function filtrarDados() {
+      const modalidadeV = document.getElementById('modalidade-filter').value;
+      const tipoObjetoV = document.getElementById('tipoobjeto-filter').value;
+      const statusV = document.getElementById('status-filter').value;
+      const searchV = (document.getElementById('search-bar').value || "").toLowerCase().trim();
+      filteredRows = allRows.filter(row => {
+        let ok = true;
+        if(modalidadeV && row['Modalidade'] !== modalidadeV) ok = false;
+        if(tipoObjetoV && row['tipo objeto'] !== tipoObjetoV) ok = false;
+        if(statusV && row['Status atual'] !== statusV) ok = false;
+        if(searchV) {
+          const matchAny = columns.some(col => (row[col] || "").toLowerCase().includes(searchV));
+          if (!matchAny) ok = false;
+        }
+        return ok;
+      });
+      atualizarTabela();
+      atualizarKPI();
+      atualizarGraficos();
+    }
+
+    function atualizarKPI() {
+      document.getElementById('kpi-total-processos').textContent = filteredRows.length;
+      let modalidades = unique(filteredRows.map(r=>r['Modalidade'])).length;
+      let status = unique(filteredRows.map(r=>r['Status atual'])).length;
+      document.getElementById('kpi-total-modalidades').textContent = modalidades;
+      document.getElementById('kpi-total-status').textContent = status;
+    }
+
+    function atualizarTabela() {
+      const table = document.getElementById('data-table');
+      const thead = table.querySelector('thead');
+      const tbody = table.querySelector('tbody');
+      thead.innerHTML = "";
+      tbody.innerHTML = "";
+      if(filteredRows.length === 0) {
+        document.getElementById('no-data-msg').style.display = "";
+        document.getElementById('table-div').style.display = "none";
+        return;
+      } else {
+        document.getElementById('no-data-msg').style.display = "none";
+        document.getElementById('table-div').style.display = "";
+      }
+      // Mostra até 4 colunas principais + botão detalhes
+      let colunasPrincipais = ['Modalidade','número','Status atual','tipo objeto'];
+      let ths = colunasPrincipais.map(col => `<th>${col}</th>`).join('') + `<th></th>`;
+      thead.innerHTML = `<tr>${ths}</tr>`;
+      filteredRows.forEach((row, idx) => {
+        let tds = colunasPrincipais.map(col => `<td>${row[col] || "-"}</td>`).join('');
+        tds += `<td><button class="btn btn-outline-primary btn-sm" onclick="verDetalhes(${idx})">Ver detalhes</button></td>`;
+        tbody.innerHTML += `<tr>${tds}</tr>`;
+      });
+    }
+
+    function atualizarGraficos() {
+      // Modalidade
+      let modalidades = {}, status = {};
+      filteredRows.forEach(r => {
+        let m = r['Modalidade'];
+        if(m) modalidades[m] = (modalidades[m]||0)+1;
+        let s = r['Status atual']; if(s) status[s] = (status[s]||0)+1;
+      });
+      // MODALIDADE
+      let mLabels = Object.keys(modalidades), mVals = Object.values(modalidades);
+      let mColors = mLabels.map((_,i)=>["#4285F4","#EA4335","#FBBC05","#34A853","#AB47BC","#00B8D4","#F4511E","#FF7043","#8D6E63"][i%9]);
+      if(chartModalidade) chartModalidade.destroy();
+      chartModalidade = new Chart(document.getElementById('chart-modalidade'), {
+        type: 'pie',
+        data: { labels: mLabels, datasets: [{ data: mVals, backgroundColor: mColors }] },
+        options: { responsive:true, plugins:{legend:{position:'bottom'}} }
+      });
+      // STATUS
+      let sLabels = Object.keys(status), sVals = Object.values(status);
+      let sColors = sLabels.map((_,i)=>["#007bff","#198754","#dc3545","#fd7e14","#6c757d","#0dcaf0","#ffc107","#d63384","#20c997"][i%9]);
+      if(chartStatus) chartStatus.destroy();
+      chartStatus = new Chart(document.getElementById('chart-status'), {
+        type: 'pie',
+        data: { labels: sLabels, datasets: [{ data: sVals, backgroundColor: sColors }] },
+        options: { responsive:true, plugins:{legend:{position:'bottom'}} }
+      });
+    }
+
+    document.getElementById('export-pdf').addEventListener('click', function() {
+      if(filteredRows.length === 0) return;
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF('l', 'mm', 'a4');
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(18);
+      doc.text('Relatório de Processos Filtrados', 14, 14);
+      doc.setFontSize(12);
+      doc.text(`Total de Processos: ${filteredRows.length}`, 14, 22);
+
+      const cols = columns;
+      const data = filteredRows.map(row =>
+        cols.map(col => row[col] || "-")
+      );
+
+      doc.autoTable({
+        head: [cols],
+        body: data,
+        startY: 30,
+        styles: { font: "helvetica", fontSize: 8, cellPadding: 2 },
+        headStyles: { fillColor: [0, 123, 255] }
+      });
+
+      doc.save("processos_filtrados.pdf");
+    });
+
+    document.getElementById('export-xlsx').addEventListener('click', function() {
+      if(filteredRows.length === 0) return;
+      const data = filteredRows.map(row => {
+        let obj = {};
+        columns.forEach(col => obj[col] = row[col]);
+        return obj;
+      });
+      const ws = XLSX.utils.json_to_sheet(data, { header: columns });
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, "Processos");
+      XLSX.writeFile(wb, "processos_filtrados.xlsx");
+    });
+
+    document.getElementById('atualizar-dados').addEventListener('click', carregarDados);
+
+    // Carrega ao abrir
+    carregarDados();
+  </script>
+</body>
+</html>
