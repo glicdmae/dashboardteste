@@ -5,15 +5,10 @@
   <title>Dashboard Prazos - Google Sheets API</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-  <!-- jsPDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <!-- jsPDF AutoTable -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-  <!-- SheetJS para exportação Excel -->
   <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <style>
     body { background: #f9fafb; }
@@ -60,7 +55,6 @@
         <button class="btn btn-secondary action-btn" id="atualizar-dados">Atualizar dados</button>
       </div>
     </div>
-    <!-- KPIs -->
     <div class="row mb-3" id="kpi-row" style="display:none;">
       <div class="col-md-4 col-6">
         <div class="kpi-card">
@@ -81,7 +75,6 @@
         </div>
       </div>
     </div>
-    <!-- Filtros -->
     <div class="row align-items-end mb-3" id="filters-row" style="display:none;">
       <div class="col-md-4 col-12 mb-2">
         <label class="filter-label mb-1" for="modalidade-filter">Modalidade:</label>
@@ -100,7 +93,6 @@
         <input class="form-control search-bar" type="text" id="search-bar" placeholder="Nº, Objeto, Modalidade, etc.">
       </div>
     </div>
-    <!-- Gráficos -->
     <div class="row mb-3" id="charts-row" style="display:none;">
       <div class="col-md-6 col-12">
         <div class="chart-card">
@@ -115,7 +107,6 @@
         </div>
       </div>
     </div>
-    <!-- Tabela -->
     <div class="row">
       <div class="col-12">
         <div class="table-responsive" id="table-div" style="display:none;">
@@ -129,7 +120,6 @@
         </div>
       </div>
     </div>
-    <!-- Modal Detalhes -->
     <div class="modal fade" id="detalhesModal" tabindex="-1" aria-labelledby="detalhesModalLabel" aria-hidden="true">
       <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
@@ -146,25 +136,30 @@
       Programado por Iago Nunes, C-FISCON
     </div>
   </div>
-  <!-- SCRIPT PRINCIPAL (depois de todas as libs!) -->
   <script>
     // CONFIGURAÇÃO
     const SHEET_ID = '1bO9DJwc76qX_VnABiP0cJ_OihOftlSF79-pf6DIn66k';
     const SHEET_NAME = 'Plan3';
     const API_KEY = 'AIzaSyCh7fyJXIjqlEJyvwrjghuEs-N6-PXxN2U';
 
-    // Variáveis globais
     let allRows = [];
     let columns = [];
     let filteredRows = [];
     let chartModalidade = null, chartStatus = null;
 
-    // Função global para o botão funcionar em qualquer contexto
     window.verDetalhes = function(idx) {
       const row = filteredRows[idx];
       let html = `<table class="table table-bordered"><tbody>`;
       columns.forEach(col => {
-        html += `<tr><th style="width:220px">${col}</th><td>${row[col] || "-"}</td></tr>`;
+        let val = row[col] || "-";
+        if (col === 'DIFERENÇA VALOR ESTIMADO COM CONTRATADO') {
+          let valorEstimado = parseFloat((row['valor estimado'] || "0").replace(/\./g, '').replace(',', '.'));
+          let valorContratado = parseFloat((row['valor contratado'] || "0").replace(/\./g, '').replace(',', '.'));
+          let diff = valorContratado - valorEstimado;
+          let diffPerc = valorEstimado > 0 ? ((diff / valorEstimado) * 100).toFixed(2) : '-';
+          val += diffPerc !== '-' ? ` (${diffPerc}%)` : '';
+        }
+        html += `<tr><th style="width:220px">${col}</th><td>${val}</td></tr>`;
       });
       html += `</tbody></table>`;
       document.getElementById('detalhes-modal-body').innerHTML = html;
@@ -187,7 +182,6 @@
         if (!data.values || data.values.length < 2) throw new Error("Nenhum dado retornado");
 
         columns = data.values[0].map(c=>c.trim());
-        // Só considera como processo se "Modalidade" estiver preenchido
         allRows = data.values.slice(1)
           .filter(row => row[0] && row[0].trim() !== "")
           .map(row => {
@@ -220,17 +214,14 @@
     }
 
     function preencherFiltros() {
-      // Modalidade
       const modalidadeFilter = document.getElementById('modalidade-filter');
       modalidadeFilter.innerHTML = `<option value="">Todas</option>`;
       let modalidadesUnicas = unique(allRows.map(r=>r['Modalidade']));
       modalidadesUnicas.forEach(m => modalidadeFilter.innerHTML += `<option value="${m}">${m}</option>`);
-      // Status
       const statusFilter = document.getElementById('status-filter');
       statusFilter.innerHTML = `<option value="">Todos</option>`;
       let statusUnicos = unique(allRows.map(r=>r['Status atual']));
       statusUnicos.forEach(s => statusFilter.innerHTML += `<option value="${s}">${s}</option>`);
-      // tipo objeto
       const tipoObjetoFilter = document.getElementById('tipoobjeto-filter');
       tipoObjetoFilter.innerHTML = `<option value="">Todos</option>`;
       let tipoObjetoUnicos = unique(allRows.map(r=>r['tipo objeto']));
@@ -285,26 +276,42 @@
         document.getElementById('no-data-msg').style.display = "none";
         document.getElementById('table-div').style.display = "";
       }
-      // Mostra até 4 colunas principais + botão detalhes
-      let colunasPrincipais = ['Modalidade','número','Status atual','tipo objeto'];
+      let colunasPrincipais = [
+        'Modalidade',
+        'número',
+        'Status atual',
+        'tipo objeto',
+        'artigo',
+        'inciso',
+        'valor contratado',
+        'DIFERENÇA VALOR ESTIMADO COM CONTRATADO'
+      ];
       let ths = colunasPrincipais.map(col => `<th>${col}</th>`).join('') + `<th></th>`;
       thead.innerHTML = `<tr>${ths}</tr>`;
       filteredRows.forEach((row, idx) => {
-        let tds = colunasPrincipais.map(col => `<td>${row[col] || "-"}</td>`).join('');
+        let tds = colunasPrincipais.map(col => {
+          let val = row[col] || "-";
+          if (col === 'DIFERENÇA VALOR ESTIMADO COM CONTRATADO') {
+            let valorEstimado = parseFloat((row['valor estimado'] || "0").replace(/\./g, '').replace(',', '.'));
+            let valorContratado = parseFloat((row['valor contratado'] || "0").replace(/\./g, '').replace(',', '.'));
+            let diff = valorContratado - valorEstimado;
+            let diffPerc = valorEstimado > 0 ? ((diff / valorEstimado) * 100).toFixed(2) : '-';
+            val += diffPerc !== '-' ? ` (${diffPerc}%)` : '';
+          }
+          return `<td>${val}</td>`;
+        }).join('');
         tds += `<td><button class="btn btn-outline-primary btn-sm" onclick="verDetalhes(${idx})">Ver detalhes</button></td>`;
         tbody.innerHTML += `<tr>${tds}</tr>`;
       });
     }
 
     function atualizarGraficos() {
-      // Modalidade
       let modalidades = {}, status = {};
       filteredRows.forEach(r => {
         let m = r['Modalidade'];
         if(m) modalidades[m] = (modalidades[m]||0)+1;
         let s = r['Status atual']; if(s) status[s] = (status[s]||0)+1;
       });
-      // MODALIDADE
       let mLabels = Object.keys(modalidades), mVals = Object.values(modalidades);
       let mColors = mLabels.map((_,i)=>["#4285F4","#EA4335","#FBBC05","#34A853","#AB47BC","#00B8D4","#F4511E","#FF7043","#8D6E63"][i%9]);
       if(chartModalidade) chartModalidade.destroy();
@@ -313,7 +320,6 @@
         data: { labels: mLabels, datasets: [{ data: mVals, backgroundColor: mColors }] },
         options: { responsive:true, plugins:{legend:{position:'bottom'}} }
       });
-      // STATUS
       let sLabels = Object.keys(status), sVals = Object.values(status);
       let sColors = sLabels.map((_,i)=>["#007bff","#198754","#dc3545","#fd7e14","#6c757d","#0dcaf0","#ffc107","#d63384","#20c997"][i%9]);
       if(chartStatus) chartStatus.destroy();
@@ -365,7 +371,6 @@
 
     document.getElementById('atualizar-dados').addEventListener('click', carregarDados);
 
-    // Carrega ao abrir
     carregarDados();
   </script>
 </body>
