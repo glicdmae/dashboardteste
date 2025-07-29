@@ -22,10 +22,10 @@
     .table th, .table td { vertical-align: middle !important; }
     .table-responsive { max-height: 440px; overflow-y: auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 6px #0001; padding: 1rem; }
     .chart-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 6px #0001; padding: 1.5rem; margin-bottom: 1.5rem; max-width: 480px; margin-left: auto; margin-right: auto; }
-    #chart-modalidade, #chart-status, #chart-ano, #chart-timeline { max-width: 360px; max-height: 360px; margin: 0 auto; display: block; }
+    #chart-modalidade, #chart-status { max-width: 360px; max-height: 360px; margin: 0 auto; display: block; }
     @media (max-width: 600px) {
       .chart-card { max-width: 99vw; padding: 0.5rem; }
-      #chart-modalidade, #chart-status, #chart-ano, #chart-timeline { max-width: 95vw; }
+      #chart-modalidade, #chart-status { max-width: 95vw; }
     }
     #loading-overlay {
       position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(255,255,255,.8); z-index: 9999;
@@ -42,132 +42,93 @@
       opacity: 0.7;
       user-select: none;
     }
-    .tab-content { margin-top: 2rem; }
-    .btn-copy-details { float:right; margin: 0 0 10px 10px; }
   </style>
 </head>
 <body>
   <div id="loading-overlay">Carregando dados...</div>
   <div class="container my-4">
     <h2 class="dashboard-title mb-4 text-center">Dashboard Prazos (Google Sheets API)</h2>
-
-    <!-- Tabs -->
-    <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
-      <li class="nav-item" role="presentation">
-        <button class="nav-link active" id="tab-home" data-bs-toggle="tab" data-bs-target="#pagina1" type="button" role="tab">Visão Geral</button>
-      </li>
-      <li class="nav-item" role="presentation">
-        <button class="nav-link" id="tab-analise" data-bs-toggle="tab" data-bs-target="#pagina2" type="button" role="tab">Gráficos & Análise</button>
-      </li>
-    </ul>
-    <div class="tab-content" id="dashboardTabsContent">
-      <!-- Página 1 -->
-      <div class="tab-pane fade show active" id="pagina1" role="tabpanel">
-        <div class="row mb-3">
-          <div class="col-md-8 text-end d-flex justify-content-end align-items-end gap-2">
-            <button class="btn btn-primary action-btn" id="export-pdf" disabled>Exportar PDF completo</button>
-            <button class="btn btn-success action-btn" id="export-xlsx" disabled>Exportar dados filtrados (Excel)</button>
-            <button class="btn btn-secondary action-btn" id="atualizar-dados">Atualizar dados</button>
-          </div>
-        </div>
-        <div class="row kpi-row-2" id="kpi-row" style="display:none;">
-          <div class="col-md-4 col-6">
-            <div class="kpi-card">
-              <div class="kpi-value" id="kpi-total-processos">0</div>
-              <div class="kpi-label">Total de Processos</div>
-            </div>
-          </div>
-          <div class="col-md-4 col-6">
-            <div class="kpi-card">
-              <div class="kpi-value" id="kpi-tempo-medio">0</div>
-              <div class="kpi-label">Tempo Médio do Processo (dias)</div>
-            </div>
-          </div>
-          <div class="col-md-4 col-6">
-            <div class="kpi-card">
-              <div class="kpi-value" id="kpi-total-ano">0</div>
-              <div class="kpi-label">Processos no Ano Selecionado</div>
-            </div>
-          </div>
-        </div>
-        <div class="row align-items-end mb-3" id="filters-row" style="display:none;">
-          <div class="col-md-3 col-12 mb-2">
-            <label class="filter-label mb-1" for="modalidade-filter">Modalidade:</label>
-            <select class="form-select" id="modalidade-filter"><option value="">Todas</option></select>
-          </div>
-          <div class="col-md-3 col-12 mb-2">
-            <label class="filter-label mb-1" for="status-filter">Status:</label>
-            <select class="form-select" id="status-filter"><option value="">Todos</option></select>
-          </div>
-          <div class="col-md-3 col-12 mb-2">
-            <label class="filter-label mb-1" for="tipoobjeto-filter">Tipo objeto:</label>
-            <select class="form-select" id="tipoobjeto-filter"><option value="">Todos</option></select>
-          </div>
-          <div class="col-md-3 col-12 mb-2">
-            <label class="filter-label mb-1" for="ano-filter">Ano do Contrato:</label>
-            <select class="form-select" id="ano-filter"><option value="">Todos</option></select>
-          </div>
-          <div class="col-12 mb-2">
-            <label class="filter-label mb-1" for="search-bar">Busca rápida:</label>
-            <input class="form-control search-bar" type="text" id="search-bar" placeholder="Nº, Objeto, Modalidade, etc.">
-          </div>
-        </div>
-        <div class="row">
-          <div class="col-12">
-            <div class="table-responsive" id="table-div" style="display:none;">
-              <table class="table table-hover table-bordered table-sm align-middle" id="data-table">
-                <thead class="table-light"></thead>
-                <tbody></tbody>
-              </table>
-            </div>
-            <div id="no-data-msg" class="text-center text-muted mt-4" style="display:none;">
-              Nenhuma linha preenchida encontrada para os filtros selecionados.
-            </div>
-          </div>
+    <div class="row mb-3">
+      <div class="col-md-8 text-end d-flex justify-content-end align-items-end gap-2">
+        <button class="btn btn-primary action-btn" id="export-pdf" disabled>Exportar PDF completo</button>
+        <button class="btn btn-success action-btn" id="export-xlsx" disabled>Exportar dados filtrados (Excel)</button>
+        <button class="btn btn-secondary action-btn" id="atualizar-dados">Atualizar dados</button>
+      </div>
+    </div>
+    <div class="row mb-3" id="kpi-row" style="display:none;">
+      <div class="col-md-4 col-6">
+        <div class="kpi-card">
+          <div class="kpi-value" id="kpi-total-processos">0</div>
+          <div class="kpi-label">Total de Processos</div>
         </div>
       </div>
-      <!-- Página 2 -->
-      <div class="tab-pane fade" id="pagina2" role="tabpanel">
-        <div class="row mb-3" id="charts-row" style="display:none;">
-          <div class="col-md-4 col-12">
-            <div class="chart-card">
-              <h6 class="text-center">Distribuição por Modalidade</h6>
-              <canvas id="chart-modalidade"></canvas>
-            </div>
-          </div>
-          <div class="col-md-4 col-12">
-            <div class="chart-card">
-              <h6 class="text-center">Distribuição por Status</h6>
-              <canvas id="chart-status"></canvas>
-            </div>
-          </div>
-          <div class="col-md-4 col-12">
-            <div class="chart-card">
-              <h6 class="text-center">Processos por Ano do Contrato</h6>
-              <canvas id="chart-ano"></canvas>
-            </div>
-          </div>
+      <div class="col-md-4 col-6">
+        <div class="kpi-card">
+          <div class="kpi-value" id="kpi-total-modalidades">0</div>
+          <div class="kpi-label">Modalidades únicas</div>
         </div>
-        <div class="row mb-3" id="timeline-row" style="display:none;">
-          <div class="col-12">
-            <div class="chart-card">
-              <h6 class="text-center">Linha do Tempo do Processo</h6>
-              <input class="form-control mb-3" id="timeline-process-input" placeholder="Digite o número do processo...">
-              <canvas id="chart-timeline"></canvas>
-            </div>
-          </div>
+      </div>
+      <div class="col-md-4 col-6">
+        <div class="kpi-card">
+          <div class="kpi-value" id="kpi-total-status">0</div>
+          <div class="kpi-label">Status únicos</div>
+        </div>
+      </div>
+    </div>
+    <div class="row align-items-end mb-3" id="filters-row" style="display:none;">
+      <div class="col-md-4 col-12 mb-2">
+        <label class="filter-label mb-1" for="modalidade-filter">Modalidade:</label>
+        <select class="form-select" id="modalidade-filter"><option value="">Todas</option></select>
+      </div>
+      <div class="col-md-4 col-12 mb-2">
+        <label class="filter-label mb-1" for="status-filter">Status:</label>
+        <select class="form-select" id="status-filter"><option value="">Todos</option></select>
+      </div>
+      <div class="col-md-4 col-12 mb-2">
+        <label class="filter-label mb-1" for="tipoobjeto-filter">Tipo objeto:</label>
+        <select class="form-select" id="tipoobjeto-filter"><option value="">Todos</option></select>
+      </div>
+      <div class="col-12 mb-2">
+        <label class="filter-label mb-1" for="search-bar">Busca rápida:</label>
+        <input class="form-control search-bar" type="text" id="search-bar" placeholder="Nº, Objeto, Modalidade, etc.">
+      </div>
+    </div>
+    <div class="row mb-3" id="charts-row" style="display:none;">
+      <div class="col-md-6 col-12">
+        <div class="chart-card">
+          <h6 class="text-center">Distribuição por Modalidade</h6>
+          <canvas id="chart-modalidade"></canvas>
+        </div>
+      </div>
+      <div class="col-md-6 col-12">
+        <div class="chart-card">
+          <h6 class="text-center">Distribuição por Status</h6>
+          <canvas id="chart-status"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="row">
+      <div class="col-12">
+        <div class="table-responsive" id="table-div" style="display:none;">
+          <table class="table table-hover table-bordered table-sm align-middle" id="data-table">
+            <thead class="table-light"></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div id="no-data-msg" class="text-center text-muted mt-4" style="display:none;">
+          Nenhuma linha preenchida encontrada para os filtros selecionados.
         </div>
       </div>
     </div>
     <div class="modal fade" id="detalhesModal" tabindex="-1" aria-labelledby="detalhesModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-xl modal-dialog-centered">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="detalhesModalLabel">Detalhes do Processo</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
           </div>
-          <div class="modal-body" id="detalhes-modal-body"></div>
-          <button class="btn btn-outline-secondary btn-copy-details">Copiar dados</button>
+          <div class="modal-body" id="detalhes-modal-body">
+          </div>
         </div>
       </div>
     </div>
@@ -184,30 +145,27 @@
     let allRows = [];
     let columns = [];
     let filteredRows = [];
-    let chartModalidade = null, chartStatus = null, chartAno = null, chartTimeline = null;
+    let chartModalidade = null, chartStatus = null;
 
     window.verDetalhes = function(idx) {
       const row = filteredRows[idx];
-      let html = `<table class="table table-bordered"><tbody>`;
+      let html = <table class="table table-bordered"><tbody>;
       columns.forEach(col => {
         let val = row[col] || "-";
-        html += `<tr><th style="width:260px">${col}</th><td>${val}</td></tr>`;
+        if (col === 'DIFERENÇA VALOR ESTIMADO COM CONTRATADO') {
+          let valorEstimado = parseFloat((row['valor estimado'] || "0").replace(/\./g, '').replace(',', '.'));
+          let valorContratado = parseFloat((row['valor contratado'] || "0").replace(/\./g, '').replace(',', '.'));
+          let diff = valorContratado - valorEstimado;
+          let diffPerc = valorEstimado > 0 ? ((diff / valorEstimado) * 100).toFixed(2) : '-';
+          val += diffPerc !== '-' ? ` (${diffPerc}%)` : '';
+        }
+        html += <tr><th style="width:220px">${col}</th><td>${val}</td></tr>;
       });
-      html += `</tbody></table>`;
+      html += </tbody></table>;
       document.getElementById('detalhes-modal-body').innerHTML = html;
       let modal = new bootstrap.Modal(document.getElementById('detalhesModal'));
       modal.show();
     };
-
-    // Copiar detalhes
-    document.addEventListener("click", function(e){
-      if(e.target.classList.contains("btn-copy-details")){
-        let html = document.getElementById('detalhes-modal-body').innerText;
-        navigator.clipboard.writeText(html);
-        e.target.innerText = "Copiado!";
-        setTimeout(()=>{e.target.innerText="Copiar dados"},1200);
-      }
-    });
 
     function exibirLoading(show) {
       document.getElementById('loading-overlay').style.display = show ? "flex" : "none";
@@ -218,10 +176,11 @@
       document.getElementById('no-data-msg').style.display = 'none';
       document.getElementById('table-div').style.display = 'none';
       try {
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}?key=${API_KEY}`;
+        const url = https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}?key=${API_KEY};
         const resp = await fetch(url);
         const data = await resp.json();
         if (!data.values || data.values.length < 2) throw new Error("Nenhum dado retornado");
+
         columns = data.values[0].map(c=>c.trim());
         allRows = data.values.slice(1)
           .filter(row => row[0] && row[0].trim() !== "")
@@ -235,14 +194,12 @@
         document.getElementById('kpi-row').style.display = "";
         document.getElementById('filters-row').style.display = "";
         document.getElementById('charts-row').style.display = "";
-        document.getElementById('timeline-row').style.display = "";
         document.getElementById('table-div').style.display = "";
         document.getElementById('export-pdf').disabled = false;
         document.getElementById('export-xlsx').disabled = false;
         document.getElementById('modalidade-filter').value = "";
         document.getElementById('tipoobjeto-filter').value = "";
         document.getElementById('status-filter').value = "";
-        document.getElementById('ano-filter').value = "";
         document.getElementById('search-bar').value = "";
         filtrarDados();
       } catch(e) {
@@ -258,24 +215,20 @@
 
     function preencherFiltros() {
       const modalidadeFilter = document.getElementById('modalidade-filter');
-      modalidadeFilter.innerHTML = `<option value="">Todas</option>`;
+      modalidadeFilter.innerHTML = <option value="">Todas</option>;
       let modalidadesUnicas = unique(allRows.map(r=>r['Modalidade']));
-      modalidadesUnicas.forEach(m => modalidadeFilter.innerHTML += `<option value="${m}">${m}</option>`);
+      modalidadesUnicas.forEach(m => modalidadeFilter.innerHTML += <option value="${m}">${m}</option>);
       const statusFilter = document.getElementById('status-filter');
-      statusFilter.innerHTML = `<option value="">Todos</option>`;
+      statusFilter.innerHTML = <option value="">Todos</option>;
       let statusUnicos = unique(allRows.map(r=>r['Status atual']));
-      statusUnicos.forEach(s => statusFilter.innerHTML += `<option value="${s}">${s}</option>`);
+      statusUnicos.forEach(s => statusFilter.innerHTML += <option value="${s}">${s}</option>);
       const tipoObjetoFilter = document.getElementById('tipoobjeto-filter');
-      tipoObjetoFilter.innerHTML = `<option value="">Todos</option>`;
+      tipoObjetoFilter.innerHTML = <option value="">Todos</option>;
       let tipoObjetoUnicos = unique(allRows.map(r=>r['tipo objeto']));
-      tipoObjetoUnicos.forEach(o => tipoObjetoFilter.innerHTML += `<option value="${o}">${o}</option>`);
-      const anoFilter = document.getElementById('ano-filter');
-      anoFilter.innerHTML = `<option value="">Todos</option>`;
-      let anosUnicos = unique(allRows.map(r=>r['ANO DO CONTRATO']));
-      anosUnicos.forEach(a => anoFilter.innerHTML += `<option value="${a}">${a}</option>`);
+      tipoObjetoUnicos.forEach(o => tipoObjetoFilter.innerHTML += <option value="${o}">${o}</option>);
     }
 
-    ['modalidade-filter','tipoobjeto-filter','status-filter','ano-filter'].forEach(id => {
+    ['modalidade-filter','tipoobjeto-filter','status-filter'].forEach(id => {
       document.getElementById(id).addEventListener('change', filtrarDados);
     });
     document.getElementById('search-bar').addEventListener('input', filtrarDados);
@@ -284,50 +237,29 @@
       const modalidadeV = document.getElementById('modalidade-filter').value;
       const tipoObjetoV = document.getElementById('tipoobjeto-filter').value;
       const statusV = document.getElementById('status-filter').value;
-      const anoV = document.getElementById('ano-filter').value;
       const searchV = (document.getElementById('search-bar').value || "").toLowerCase().trim();
-
       filteredRows = allRows.filter(row => {
         let ok = true;
         if(modalidadeV && row['Modalidade'] !== modalidadeV) ok = false;
         if(tipoObjetoV && row['tipo objeto'] !== tipoObjetoV) ok = false;
         if(statusV && row['Status atual'] !== statusV) ok = false;
-        if(anoV && row['ANO DO CONTRATO'] !== anoV) ok = false;
         if(searchV) {
           const matchAny = columns.some(col => (row[col] || "").toLowerCase().includes(searchV));
           if (!matchAny) ok = false;
         }
         return ok;
       });
-
       atualizarTabela();
       atualizarKPI();
       atualizarGraficos();
     }
 
-    function parseDate(str) {
-      if(!str) return null;
-      if(str.includes('/')) {
-        const [d,m,y] = str.split('/');
-        return new Date(`${y}-${m}-${d}T00:00:00`);
-      }
-      if(str.match(/^\d{4}-\d{2}-\d{2}/)) {
-        return new Date(str);
-      }
-      return null;
-    }
-
     function atualizarKPI() {
       document.getElementById('kpi-total-processos').textContent = filteredRows.length;
-      // Tempo médio total do processo
-      let tempos = filteredRows.map(r => parseFloat((r['Tempo total Processo (soma de todos os tempos)'] || "0").replace(",",".").replace(" dias","")));
-      let somaTempo = tempos.reduce((a,b)=>a+b,0);
-      let tempoMedio = filteredRows.length>0 ? (somaTempo/filteredRows.length).toFixed(1) : "0";
-      document.getElementById('kpi-tempo-medio').textContent = tempoMedio;
-      // Processos por ano do contrato (ano filtrado, se tiver)
-      const anoV = document.getElementById('ano-filter').value;
-      let processosAno = filteredRows.filter(r=>anoV ? r['ANO DO CONTRATO']===anoV : true).length;
-      document.getElementById('kpi-total-ano').textContent = processosAno;
+      let modalidades = unique(filteredRows.map(r=>r['Modalidade'])).length;
+      let status = unique(filteredRows.map(r=>r['Status atual'])).length;
+      document.getElementById('kpi-total-modalidades').textContent = modalidades;
+      document.getElementById('kpi-total-status').textContent = status;
     }
 
     function atualizarTabela() {
@@ -344,25 +276,41 @@
         document.getElementById('no-data-msg').style.display = "none";
         document.getElementById('table-div').style.display = "";
       }
-      // Mostra as principais colunas + botão detalhes
       let colunasPrincipais = [
-        'Modalidade', 'número', 'Status atual', 'tipo objeto', 'artigo', 'inciso', 'valor contratado', 'DIFERENÇA VALOR ESTIMADO COM CONTRATADO', 'ANO DO CONTRATO'
+        'Modalidade',
+        'número',
+        'Status atual',
+        'tipo objeto',
+        'artigo',
+        'inciso',
+        'valor contratado',
+        'DIFERENÇA VALOR ESTIMADO COM CONTRATADO'
       ];
-      let ths = colunasPrincipais.map(col => `<th>${col}</th>`).join('') + `<th></th>`;
-      thead.innerHTML = `<tr>${ths}</tr>`;
+      let ths = colunasPrincipais.map(col => <th>${col}</th>).join('') + <th></th>;
+      thead.innerHTML = <tr>${ths}</tr>;
       filteredRows.forEach((row, idx) => {
-        let tds = colunasPrincipais.map(col => row[col] || "-").join('');
-        tds += `<td><button class="btn btn-outline-primary btn-sm" onclick="verDetalhes(${idx})">Ver detalhes</button></td>`;
-        tbody.innerHTML += `<tr>${tds}</tr>`;
+        let tds = colunasPrincipais.map(col => {
+          let val = row[col] || "-";
+          if (col === 'DIFERENÇA VALOR ESTIMADO COM CONTRATADO') {
+            let valorEstimado = parseFloat((row['valor estimado'] || "0").replace(/\./g, '').replace(',', '.'));
+            let valorContratado = parseFloat((row['valor contratado'] || "0").replace(/\./g, '').replace(',', '.'));
+            let diff = valorContratado - valorEstimado;
+            let diffPerc = valorEstimado > 0 ? ((diff / valorEstimado) * 100).toFixed(2) : '-';
+            val += diffPerc !== '-' ? ` (${diffPerc}%)` : '';
+          }
+          return <td>${val}</td>;
+        }).join('');
+        tds += <td><button class="btn btn-outline-primary btn-sm" onclick="verDetalhes(${idx})">Ver detalhes</button></td>;
+        tbody.innerHTML += <tr>${tds}</tr>;
       });
     }
 
     function atualizarGraficos() {
-      // Modalidade
-      let modalidades = {};
+      let modalidades = {}, status = {};
       filteredRows.forEach(r => {
         let m = r['Modalidade'];
         if(m) modalidades[m] = (modalidades[m]||0)+1;
+        let s = r['Status atual']; if(s) status[s] = (status[s]||0)+1;
       });
       let mLabels = Object.keys(modalidades), mVals = Object.values(modalidades);
       let mColors = mLabels.map((_,i)=>["#4285F4","#EA4335","#FBBC05","#34A853","#AB47BC","#00B8D4","#F4511E","#FF7043","#8D6E63"][i%9]);
@@ -372,11 +320,6 @@
         data: { labels: mLabels, datasets: [{ data: mVals, backgroundColor: mColors }] },
         options: { responsive:true, plugins:{legend:{position:'bottom'}} }
       });
-      // Status
-      let status = {};
-      filteredRows.forEach(r => {
-        let s = r['Status atual']; if(s) status[s] = (status[s]||0)+1;
-      });
       let sLabels = Object.keys(status), sVals = Object.values(status);
       let sColors = sLabels.map((_,i)=>["#007bff","#198754","#dc3545","#fd7e14","#6c757d","#0dcaf0","#ffc107","#d63384","#20c997"][i%9]);
       if(chartStatus) chartStatus.destroy();
@@ -384,93 +327,6 @@
         type: 'pie',
         data: { labels: sLabels, datasets: [{ data: sVals, backgroundColor: sColors }] },
         options: { responsive:true, plugins:{legend:{position:'bottom'}} }
-      });
-      // Processos por ano do contrato
-      let anos = {};
-      filteredRows.forEach(r => {
-        let a = r['ANO DO CONTRATO']; if(a) anos[a] = (anos[a]||0)+1;
-      });
-      let aLabels = Object.keys(anos), aVals = Object.values(anos);
-      let aColors = aLabels.map((_,i)=>["#AB47BC","#007bff","#FBBC05","#34A853","#F4511E","#FF7043","#8D6E63","#EA4335","#00B8D4"][i%9]);
-      if(chartAno) chartAno.destroy();
-      chartAno = new Chart(document.getElementById('chart-ano'), {
-        type: 'bar',
-        data: { labels: aLabels, datasets: [{ label:'Processos', data: aVals, backgroundColor: aColors }] },
-        options: { responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
-      });
-    }
-
-    // Timeline busca por número do processo
-    document.getElementById('timeline-process-input').addEventListener('input', function(){
-      let txt = this.value.trim();
-      if(!txt) {
-        if(chartTimeline) chartTimeline.destroy();
-        return;
-      }
-      let idx = allRows.findIndex(row => row['número'] == txt);
-      if(idx === -1) {
-        if(chartTimeline) chartTimeline.destroy();
-        return;
-      }
-      atualizarTimeline(idx);
-    });
-
-    function atualizarTimeline(idx) {
-      const row = allRows[idx];
-      // Datas principais
-      let datasLabels = [
-        'Data vinculação (licitacon)',
-        'Data início elaboração',
-        'Data envio PME',
-        'Data Retorno PME',
-        'Data Publicação edital',
-        'Data abertura',
-        'Data homologação',
-        'data assinatura contrato/envio empenho',
-        'Data da adjudicação',
-        'data Julgamento'
-      ];
-      let datas = datasLabels.map(l => parseDate(row[l]));
-      let labels = datasLabels.map((l,i) => datas[i] ? l : null).filter(Boolean);
-      let datasFiltradas = datas.map((d,i)=>d?d:null).filter(Boolean);
-      // Monta gráfico
-      if(chartTimeline) chartTimeline.destroy();
-      chartTimeline = new Chart(document.getElementById('chart-timeline'), {
-        type:'line',
-        data:{
-          labels:labels,
-          datasets:[{
-            label:'Linha do Tempo',
-            data:datasFiltradas.map(d=>d.getTime()),
-            borderColor:'#4285F4',
-            backgroundColor:'rgba(66,133,244,0.1)',
-            tension:0.1
-          }]
-        },
-        options:{
-          responsive:true,
-          plugins:{
-            legend:{display:false},
-            tooltip:{
-              callbacks:{
-                label: function(ctx){
-                  let dt = new Date(ctx.raw);
-                  return dt.toLocaleDateString('pt-BR');
-                }
-              }
-            }
-          },
-          scales:{
-            y:{
-              display:false
-            },
-            x:{
-              ticks:{
-                autoSkip:false
-              }
-            }
-          }
-        }
       });
     }
 
@@ -482,7 +338,7 @@
       doc.setFontSize(18);
       doc.text('Relatório de Processos Filtrados', 14, 14);
       doc.setFontSize(12);
-      doc.text(`Total de Processos: ${filteredRows.length}`, 14, 22);
+      doc.text(Total de Processos: ${filteredRows.length}, 14, 22);
 
       const cols = columns;
       const data = filteredRows.map(row =>
