@@ -42,115 +42,120 @@
       opacity: 0.7;
       user-select: none;
     }
-    .kpi-row-2 { margin-bottom: 2rem; }
+    .tab-content { margin-top: 2rem; }
+    .btn-copy-details { float:right; margin: 0 0 10px 10px; }
   </style>
 </head>
 <body>
   <div id="loading-overlay">Carregando dados...</div>
   <div class="container my-4">
     <h2 class="dashboard-title mb-4 text-center">Dashboard Prazos (Google Sheets API)</h2>
-    <div class="row mb-3">
-      <div class="col-md-8 text-end d-flex justify-content-end align-items-end gap-2">
-        <button class="btn btn-primary action-btn" id="export-pdf" disabled>Exportar PDF completo</button>
-        <button class="btn btn-success action-btn" id="export-xlsx" disabled>Exportar dados filtrados (Excel)</button>
-        <button class="btn btn-secondary action-btn" id="atualizar-dados">Atualizar dados</button>
-      </div>
-    </div>
-    <div class="row kpi-row-2" id="kpi-row" style="display:none;">
-      <div class="col-md-3 col-6">
-        <div class="kpi-card">
-          <div class="kpi-value" id="kpi-total-processos">0</div>
-          <div class="kpi-label">Total de Processos</div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs" id="dashboardTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="tab-home" data-bs-toggle="tab" data-bs-target="#pagina1" type="button" role="tab">Visão Geral</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="tab-analise" data-bs-toggle="tab" data-bs-target="#pagina2" type="button" role="tab">Gráficos & Análise</button>
+      </li>
+    </ul>
+    <div class="tab-content" id="dashboardTabsContent">
+      <!-- Página 1 -->
+      <div class="tab-pane fade show active" id="pagina1" role="tabpanel">
+        <div class="row mb-3">
+          <div class="col-md-8 text-end d-flex justify-content-end align-items-end gap-2">
+            <button class="btn btn-primary action-btn" id="export-pdf" disabled>Exportar PDF completo</button>
+            <button class="btn btn-success action-btn" id="export-xlsx" disabled>Exportar dados filtrados (Excel)</button>
+            <button class="btn btn-secondary action-btn" id="atualizar-dados">Atualizar dados</button>
+          </div>
+        </div>
+        <div class="row kpi-row-2" id="kpi-row" style="display:none;">
+          <div class="col-md-4 col-6">
+            <div class="kpi-card">
+              <div class="kpi-value" id="kpi-total-processos">0</div>
+              <div class="kpi-label">Total de Processos</div>
+            </div>
+          </div>
+          <div class="col-md-4 col-6">
+            <div class="kpi-card">
+              <div class="kpi-value" id="kpi-tempo-medio">0</div>
+              <div class="kpi-label">Tempo Médio do Processo (dias)</div>
+            </div>
+          </div>
+          <div class="col-md-4 col-6">
+            <div class="kpi-card">
+              <div class="kpi-value" id="kpi-total-ano">0</div>
+              <div class="kpi-label">Processos no Ano Selecionado</div>
+            </div>
+          </div>
+        </div>
+        <div class="row align-items-end mb-3" id="filters-row" style="display:none;">
+          <div class="col-md-3 col-12 mb-2">
+            <label class="filter-label mb-1" for="modalidade-filter">Modalidade:</label>
+            <select class="form-select" id="modalidade-filter"><option value="">Todas</option></select>
+          </div>
+          <div class="col-md-3 col-12 mb-2">
+            <label class="filter-label mb-1" for="status-filter">Status:</label>
+            <select class="form-select" id="status-filter"><option value="">Todos</option></select>
+          </div>
+          <div class="col-md-3 col-12 mb-2">
+            <label class="filter-label mb-1" for="tipoobjeto-filter">Tipo objeto:</label>
+            <select class="form-select" id="tipoobjeto-filter"><option value="">Todos</option></select>
+          </div>
+          <div class="col-md-3 col-12 mb-2">
+            <label class="filter-label mb-1" for="ano-filter">Ano do Contrato:</label>
+            <select class="form-select" id="ano-filter"><option value="">Todos</option></select>
+          </div>
+          <div class="col-12 mb-2">
+            <label class="filter-label mb-1" for="search-bar">Busca rápida:</label>
+            <input class="form-control search-bar" type="text" id="search-bar" placeholder="Nº, Objeto, Modalidade, etc.">
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-12">
+            <div class="table-responsive" id="table-div" style="display:none;">
+              <table class="table table-hover table-bordered table-sm align-middle" id="data-table">
+                <thead class="table-light"></thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <div id="no-data-msg" class="text-center text-muted mt-4" style="display:none;">
+              Nenhuma linha preenchida encontrada para os filtros selecionados.
+            </div>
+          </div>
         </div>
       </div>
-      <div class="col-md-3 col-6">
-        <div class="kpi-card">
-          <div class="kpi-value" id="kpi-tempo-medio">0</div>
-          <div class="kpi-label">Tempo Médio do Processo (dias)</div>
+      <!-- Página 2 -->
+      <div class="tab-pane fade" id="pagina2" role="tabpanel">
+        <div class="row mb-3" id="charts-row" style="display:none;">
+          <div class="col-md-4 col-12">
+            <div class="chart-card">
+              <h6 class="text-center">Distribuição por Modalidade</h6>
+              <canvas id="chart-modalidade"></canvas>
+            </div>
+          </div>
+          <div class="col-md-4 col-12">
+            <div class="chart-card">
+              <h6 class="text-center">Distribuição por Status</h6>
+              <canvas id="chart-status"></canvas>
+            </div>
+          </div>
+          <div class="col-md-4 col-12">
+            <div class="chart-card">
+              <h6 class="text-center">Processos por Ano do Contrato</h6>
+              <canvas id="chart-ano"></canvas>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="col-md-3 col-6">
-        <div class="kpi-card">
-          <div class="kpi-value" id="kpi-total-contratado">0</div>
-          <div class="kpi-label">Valor Total Contratado (R$)</div>
-        </div>
-      </div>
-      <div class="col-md-3 col-6">
-        <div class="kpi-card">
-          <div class="kpi-value" id="kpi-total-ano">0</div>
-          <div class="kpi-label">Processos no Ano Selecionado</div>
-        </div>
-      </div>
-    </div>
-    <div class="row align-items-end mb-3" id="filters-row" style="display:none;">
-      <div class="col-md-3 col-12 mb-2">
-        <label class="filter-label mb-1" for="modalidade-filter">Modalidade:</label>
-        <select class="form-select" id="modalidade-filter"><option value="">Todas</option></select>
-      </div>
-      <div class="col-md-3 col-12 mb-2">
-        <label class="filter-label mb-1" for="status-filter">Status:</label>
-        <select class="form-select" id="status-filter"><option value="">Todos</option></select>
-      </div>
-      <div class="col-md-3 col-12 mb-2">
-        <label class="filter-label mb-1" for="tipoobjeto-filter">Tipo objeto:</label>
-        <select class="form-select" id="tipoobjeto-filter"><option value="">Todos</option></select>
-      </div>
-      <div class="col-md-3 col-12 mb-2">
-        <label class="filter-label mb-1" for="ano-filter">Ano do Contrato:</label>
-        <select class="form-select" id="ano-filter"><option value="">Todos</option></select>
-      </div>
-      <div class="col-md-6 col-12 mb-2">
-        <label class="filter-label mb-1" for="date-inicial-filter">Data Inicial (Homologação):</label>
-        <input class="form-control" type="date" id="date-inicial-filter">
-      </div>
-      <div class="col-md-6 col-12 mb-2">
-        <label class="filter-label mb-1" for="date-final-filter">Data Final (Homologação):</label>
-        <input class="form-control" type="date" id="date-final-filter">
-      </div>
-      <div class="col-12 mb-2">
-        <label class="filter-label mb-1" for="search-bar">Busca rápida:</label>
-        <input class="form-control search-bar" type="text" id="search-bar" placeholder="Nº, Objeto, Modalidade, etc.">
-      </div>
-    </div>
-    <div class="row mb-3" id="charts-row" style="display:none;">
-      <div class="col-md-4 col-12">
-        <div class="chart-card">
-          <h6 class="text-center">Distribuição por Modalidade</h6>
-          <canvas id="chart-modalidade"></canvas>
-        </div>
-      </div>
-      <div class="col-md-4 col-12">
-        <div class="chart-card">
-          <h6 class="text-center">Distribuição por Status</h6>
-          <canvas id="chart-status"></canvas>
-        </div>
-      </div>
-      <div class="col-md-4 col-12">
-        <div class="chart-card">
-          <h6 class="text-center">Processos por Ano do Contrato</h6>
-          <canvas id="chart-ano"></canvas>
-        </div>
-      </div>
-    </div>
-    <div class="row mb-3" id="timeline-row" style="display:none;">
-      <div class="col-12">
-        <div class="chart-card">
-          <h6 class="text-center">Linha do Tempo do Processo Selecionado</h6>
-          <select class="form-select mb-3" id="timeline-process-select"></select>
-          <canvas id="chart-timeline"></canvas>
-        </div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-12">
-        <div class="table-responsive" id="table-div" style="display:none;">
-          <table class="table table-hover table-bordered table-sm align-middle" id="data-table">
-            <thead class="table-light"></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <div id="no-data-msg" class="text-center text-muted mt-4" style="display:none;">
-          Nenhuma linha preenchida encontrada para os filtros selecionados.
+        <div class="row mb-3" id="timeline-row" style="display:none;">
+          <div class="col-12">
+            <div class="chart-card">
+              <h6 class="text-center">Linha do Tempo do Processo</h6>
+              <input class="form-control mb-3" id="timeline-process-input" placeholder="Digite o número do processo...">
+              <canvas id="chart-timeline"></canvas>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -162,6 +167,7 @@
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
           </div>
           <div class="modal-body" id="detalhes-modal-body"></div>
+          <button class="btn btn-outline-secondary btn-copy-details">Copiar dados</button>
         </div>
       </div>
     </div>
@@ -192,6 +198,16 @@
       let modal = new bootstrap.Modal(document.getElementById('detalhesModal'));
       modal.show();
     };
+
+    // Copiar detalhes
+    document.addEventListener("click", function(e){
+      if(e.target.classList.contains("btn-copy-details")){
+        let html = document.getElementById('detalhes-modal-body').innerText;
+        navigator.clipboard.writeText(html);
+        e.target.innerText = "Copiado!";
+        setTimeout(()=>{e.target.innerText="Copiar dados"},1200);
+      }
+    });
 
     function exibirLoading(show) {
       document.getElementById('loading-overlay').style.display = show ? "flex" : "none";
@@ -227,8 +243,6 @@
         document.getElementById('tipoobjeto-filter').value = "";
         document.getElementById('status-filter').value = "";
         document.getElementById('ano-filter').value = "";
-        document.getElementById('date-inicial-filter').value = "";
-        document.getElementById('date-final-filter').value = "";
         document.getElementById('search-bar').value = "";
         filtrarDados();
       } catch(e) {
@@ -261,7 +275,7 @@
       anosUnicos.forEach(a => anoFilter.innerHTML += `<option value="${a}">${a}</option>`);
     }
 
-    ['modalidade-filter','tipoobjeto-filter','status-filter','ano-filter','date-inicial-filter','date-final-filter'].forEach(id => {
+    ['modalidade-filter','tipoobjeto-filter','status-filter','ano-filter'].forEach(id => {
       document.getElementById(id).addEventListener('change', filtrarDados);
     });
     document.getElementById('search-bar').addEventListener('input', filtrarDados);
@@ -271,8 +285,6 @@
       const tipoObjetoV = document.getElementById('tipoobjeto-filter').value;
       const statusV = document.getElementById('status-filter').value;
       const anoV = document.getElementById('ano-filter').value;
-      const dateIniV = document.getElementById('date-inicial-filter').value;
-      const dateFimV = document.getElementById('date-final-filter').value;
       const searchV = (document.getElementById('search-bar').value || "").toLowerCase().trim();
 
       filteredRows = allRows.filter(row => {
@@ -281,17 +293,6 @@
         if(tipoObjetoV && row['tipo objeto'] !== tipoObjetoV) ok = false;
         if(statusV && row['Status atual'] !== statusV) ok = false;
         if(anoV && row['ANO DO CONTRATO'] !== anoV) ok = false;
-        // Filtro por datas de homologação
-        if(dateIniV) {
-          let d = parseDate(row['Data homologação']);
-          let dIni = new Date(dateIniV+'T00:00:00');
-          if(!d || d < dIni) ok = false;
-        }
-        if(dateFimV) {
-          let d = parseDate(row['Data homologação']);
-          let dFim = new Date(dateFimV+'T23:59:59');
-          if(!d || d > dFim) ok = false;
-        }
         if(searchV) {
           const matchAny = columns.some(col => (row[col] || "").toLowerCase().includes(searchV));
           if (!matchAny) ok = false;
@@ -302,7 +303,6 @@
       atualizarTabela();
       atualizarKPI();
       atualizarGraficos();
-      atualizarTimelineSelect();
     }
 
     function parseDate(str) {
@@ -324,10 +324,6 @@
       let somaTempo = tempos.reduce((a,b)=>a+b,0);
       let tempoMedio = filteredRows.length>0 ? (somaTempo/filteredRows.length).toFixed(1) : "0";
       document.getElementById('kpi-tempo-medio').textContent = tempoMedio;
-      // Valor total contratado
-      let valores = filteredRows.map(r => parseFloat((r['VALOR CONTRATADO'] || "0").replace(/\./g,'').replace(',','.')));
-      let somaValor = valores.reduce((a,b)=>a+b,0);
-      document.getElementById('kpi-total-contratado').textContent = somaValor.toLocaleString('pt-BR',{minimumFractionDigits:2});
       // Processos por ano do contrato (ano filtrado, se tiver)
       const anoV = document.getElementById('ano-filter').value;
       let processosAno = filteredRows.filter(r=>anoV ? r['ANO DO CONTRATO']===anoV : true).length;
@@ -350,15 +346,7 @@
       }
       // Mostra as principais colunas + botão detalhes
       let colunasPrincipais = [
-        'Modalidade',
-        'número',
-        'Status atual',
-        'tipo objeto',
-        'artigo',
-        'inciso',
-        'valor contratado',
-        'DIFERENÇA VALOR ESTIMADO COM CONTRATADO',
-        'ANO DO CONTRATO'
+        'Modalidade', 'número', 'Status atual', 'tipo objeto', 'artigo', 'inciso', 'valor contratado', 'DIFERENÇA VALOR ESTIMADO COM CONTRATADO', 'ANO DO CONTRATO'
       ];
       let ths = colunasPrincipais.map(col => `<th>${col}</th>`).join('') + `<th></th>`;
       thead.innerHTML = `<tr>${ths}</tr>`;
@@ -412,30 +400,23 @@
       });
     }
 
-    function atualizarTimelineSelect() {
-      const select = document.getElementById('timeline-process-select');
-      select.innerHTML = '';
-      filteredRows.forEach((row, idx) => {
-        let label = `${row['Modalidade'] || ''} ${row['número'] || ''} - ${row['Objeto'] || ''}`;
-        select.innerHTML += `<option value="${idx}">${label}</option>`;
-      });
-      if(filteredRows.length > 0) {
-        select.value = 0;
-        atualizarTimeline();
-      } else {
-        if(chartTimeline) chartTimeline.destroy();
-      }
-    }
-
-    document.getElementById('timeline-process-select').addEventListener('change', atualizarTimeline);
-
-    function atualizarTimeline() {
-      const select = document.getElementById('timeline-process-select');
-      if(select.value === "" || filteredRows.length === 0) {
+    // Timeline busca por número do processo
+    document.getElementById('timeline-process-input').addEventListener('input', function(){
+      let txt = this.value.trim();
+      if(!txt) {
         if(chartTimeline) chartTimeline.destroy();
         return;
       }
-      const row = filteredRows[parseInt(select.value)];
+      let idx = allRows.findIndex(row => row['número'] == txt);
+      if(idx === -1) {
+        if(chartTimeline) chartTimeline.destroy();
+        return;
+      }
+      atualizarTimeline(idx);
+    });
+
+    function atualizarTimeline(idx) {
+      const row = allRows[idx];
       // Datas principais
       let datasLabels = [
         'Data vinculação (licitacon)',
