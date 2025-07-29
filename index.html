@@ -22,10 +22,10 @@
     .table th, .table td { vertical-align: middle !important; }
     .table-responsive { max-height: 440px; overflow-y: auto; background: #fff; border-radius: 12px; box-shadow: 0 2px 6px #0001; padding: 1rem; }
     .chart-card { background: #fff; border-radius: 12px; box-shadow: 0 2px 6px #0001; padding: 1.5rem; margin-bottom: 1.5rem; max-width: 480px; margin-left: auto; margin-right: auto; }
-    #chart-modalidade, #chart-status { max-width: 360px; max-height: 360px; margin: 0 auto; display: block; }
+    #chart-modalidade, #chart-status, #chart-ano, #chart-timeline { max-width: 360px; max-height: 360px; margin: 0 auto; display: block; }
     @media (max-width: 600px) {
       .chart-card { max-width: 99vw; padding: 0.5rem; }
-      #chart-modalidade, #chart-status { max-width: 95vw; }
+      #chart-modalidade, #chart-status, #chart-ano, #chart-timeline { max-width: 95vw; }
     }
     #loading-overlay {
       position: fixed; top:0; left:0; width:100vw; height:100vh; background: rgba(255,255,255,.8); z-index: 9999;
@@ -42,6 +42,7 @@
       opacity: 0.7;
       user-select: none;
     }
+    .kpi-row-2 { margin-bottom: 2rem; }
   </style>
 </head>
 <body>
@@ -55,38 +56,56 @@
         <button class="btn btn-secondary action-btn" id="atualizar-dados">Atualizar dados</button>
       </div>
     </div>
-    <div class="row mb-3" id="kpi-row" style="display:none;">
-      <div class="col-md-4 col-6">
+    <div class="row kpi-row-2" id="kpi-row" style="display:none;">
+      <div class="col-md-3 col-6">
         <div class="kpi-card">
           <div class="kpi-value" id="kpi-total-processos">0</div>
           <div class="kpi-label">Total de Processos</div>
         </div>
       </div>
-      <div class="col-md-4 col-6">
+      <div class="col-md-3 col-6">
         <div class="kpi-card">
-          <div class="kpi-value" id="kpi-total-modalidades">0</div>
-          <div class="kpi-label">Modalidades únicas</div>
+          <div class="kpi-value" id="kpi-tempo-medio">0</div>
+          <div class="kpi-label">Tempo Médio do Processo (dias)</div>
         </div>
       </div>
-      <div class="col-md-4 col-6">
+      <div class="col-md-3 col-6">
         <div class="kpi-card">
-          <div class="kpi-value" id="kpi-total-status">0</div>
-          <div class="kpi-label">Status únicos</div>
+          <div class="kpi-value" id="kpi-total-contratado">0</div>
+          <div class="kpi-label">Valor Total Contratado (R$)</div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6">
+        <div class="kpi-card">
+          <div class="kpi-value" id="kpi-total-ano">0</div>
+          <div class="kpi-label">Processos no Ano Selecionado</div>
         </div>
       </div>
     </div>
     <div class="row align-items-end mb-3" id="filters-row" style="display:none;">
-      <div class="col-md-4 col-12 mb-2">
+      <div class="col-md-3 col-12 mb-2">
         <label class="filter-label mb-1" for="modalidade-filter">Modalidade:</label>
         <select class="form-select" id="modalidade-filter"><option value="">Todas</option></select>
       </div>
-      <div class="col-md-4 col-12 mb-2">
+      <div class="col-md-3 col-12 mb-2">
         <label class="filter-label mb-1" for="status-filter">Status:</label>
         <select class="form-select" id="status-filter"><option value="">Todos</option></select>
       </div>
-      <div class="col-md-4 col-12 mb-2">
+      <div class="col-md-3 col-12 mb-2">
         <label class="filter-label mb-1" for="tipoobjeto-filter">Tipo objeto:</label>
         <select class="form-select" id="tipoobjeto-filter"><option value="">Todos</option></select>
+      </div>
+      <div class="col-md-3 col-12 mb-2">
+        <label class="filter-label mb-1" for="ano-filter">Ano do Contrato:</label>
+        <select class="form-select" id="ano-filter"><option value="">Todos</option></select>
+      </div>
+      <div class="col-md-6 col-12 mb-2">
+        <label class="filter-label mb-1" for="date-inicial-filter">Data Inicial (Homologação):</label>
+        <input class="form-control" type="date" id="date-inicial-filter">
+      </div>
+      <div class="col-md-6 col-12 mb-2">
+        <label class="filter-label mb-1" for="date-final-filter">Data Final (Homologação):</label>
+        <input class="form-control" type="date" id="date-final-filter">
       </div>
       <div class="col-12 mb-2">
         <label class="filter-label mb-1" for="search-bar">Busca rápida:</label>
@@ -94,16 +113,31 @@
       </div>
     </div>
     <div class="row mb-3" id="charts-row" style="display:none;">
-      <div class="col-md-6 col-12">
+      <div class="col-md-4 col-12">
         <div class="chart-card">
           <h6 class="text-center">Distribuição por Modalidade</h6>
           <canvas id="chart-modalidade"></canvas>
         </div>
       </div>
-      <div class="col-md-6 col-12">
+      <div class="col-md-4 col-12">
         <div class="chart-card">
           <h6 class="text-center">Distribuição por Status</h6>
           <canvas id="chart-status"></canvas>
+        </div>
+      </div>
+      <div class="col-md-4 col-12">
+        <div class="chart-card">
+          <h6 class="text-center">Processos por Ano do Contrato</h6>
+          <canvas id="chart-ano"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="row mb-3" id="timeline-row" style="display:none;">
+      <div class="col-12">
+        <div class="chart-card">
+          <h6 class="text-center">Linha do Tempo do Processo Selecionado</h6>
+          <select class="form-select mb-3" id="timeline-process-select"></select>
+          <canvas id="chart-timeline"></canvas>
         </div>
       </div>
     </div>
@@ -121,14 +155,13 @@
       </div>
     </div>
     <div class="modal fade" id="detalhesModal" tabindex="-1" aria-labelledby="detalhesModalLabel" aria-hidden="true">
-      <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-dialog modal-xl modal-dialog-centered">
         <div class="modal-content">
           <div class="modal-header">
             <h5 class="modal-title" id="detalhesModalLabel">Detalhes do Processo</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
           </div>
-          <div class="modal-body" id="detalhes-modal-body">
-          </div>
+          <div class="modal-body" id="detalhes-modal-body"></div>
         </div>
       </div>
     </div>
@@ -145,21 +178,14 @@
     let allRows = [];
     let columns = [];
     let filteredRows = [];
-    let chartModalidade = null, chartStatus = null;
+    let chartModalidade = null, chartStatus = null, chartAno = null, chartTimeline = null;
 
     window.verDetalhes = function(idx) {
       const row = filteredRows[idx];
       let html = `<table class="table table-bordered"><tbody>`;
       columns.forEach(col => {
         let val = row[col] || "-";
-        if (col === 'DIFERENÇA VALOR ESTIMADO COM CONTRATADO') {
-          let valorEstimado = parseFloat((row['valor estimado'] || "0").replace(/\./g, '').replace(',', '.'));
-          let valorContratado = parseFloat((row['valor contratado'] || "0").replace(/\./g, '').replace(',', '.'));
-          let diff = valorContratado - valorEstimado;
-          let diffPerc = valorEstimado > 0 ? ((diff / valorEstimado) * 100).toFixed(2) : '-';
-          val += diffPerc !== '-' ? ` (${diffPerc}%)` : '';
-        }
-        html += `<tr><th style="width:220px">${col}</th><td>${val}</td></tr>`;
+        html += `<tr><th style="width:260px">${col}</th><td>${val}</td></tr>`;
       });
       html += `</tbody></table>`;
       document.getElementById('detalhes-modal-body').innerHTML = html;
@@ -180,7 +206,6 @@
         const resp = await fetch(url);
         const data = await resp.json();
         if (!data.values || data.values.length < 2) throw new Error("Nenhum dado retornado");
-
         columns = data.values[0].map(c=>c.trim());
         allRows = data.values.slice(1)
           .filter(row => row[0] && row[0].trim() !== "")
@@ -194,12 +219,16 @@
         document.getElementById('kpi-row').style.display = "";
         document.getElementById('filters-row').style.display = "";
         document.getElementById('charts-row').style.display = "";
+        document.getElementById('timeline-row').style.display = "";
         document.getElementById('table-div').style.display = "";
         document.getElementById('export-pdf').disabled = false;
         document.getElementById('export-xlsx').disabled = false;
         document.getElementById('modalidade-filter').value = "";
         document.getElementById('tipoobjeto-filter').value = "";
         document.getElementById('status-filter').value = "";
+        document.getElementById('ano-filter').value = "";
+        document.getElementById('date-inicial-filter').value = "";
+        document.getElementById('date-final-filter').value = "";
         document.getElementById('search-bar').value = "";
         filtrarDados();
       } catch(e) {
@@ -226,9 +255,13 @@
       tipoObjetoFilter.innerHTML = `<option value="">Todos</option>`;
       let tipoObjetoUnicos = unique(allRows.map(r=>r['tipo objeto']));
       tipoObjetoUnicos.forEach(o => tipoObjetoFilter.innerHTML += `<option value="${o}">${o}</option>`);
+      const anoFilter = document.getElementById('ano-filter');
+      anoFilter.innerHTML = `<option value="">Todos</option>`;
+      let anosUnicos = unique(allRows.map(r=>r['ANO DO CONTRATO']));
+      anosUnicos.forEach(a => anoFilter.innerHTML += `<option value="${a}">${a}</option>`);
     }
 
-    ['modalidade-filter','tipoobjeto-filter','status-filter'].forEach(id => {
+    ['modalidade-filter','tipoobjeto-filter','status-filter','ano-filter','date-inicial-filter','date-final-filter'].forEach(id => {
       document.getElementById(id).addEventListener('change', filtrarDados);
     });
     document.getElementById('search-bar').addEventListener('input', filtrarDados);
@@ -237,29 +270,68 @@
       const modalidadeV = document.getElementById('modalidade-filter').value;
       const tipoObjetoV = document.getElementById('tipoobjeto-filter').value;
       const statusV = document.getElementById('status-filter').value;
+      const anoV = document.getElementById('ano-filter').value;
+      const dateIniV = document.getElementById('date-inicial-filter').value;
+      const dateFimV = document.getElementById('date-final-filter').value;
       const searchV = (document.getElementById('search-bar').value || "").toLowerCase().trim();
+
       filteredRows = allRows.filter(row => {
         let ok = true;
         if(modalidadeV && row['Modalidade'] !== modalidadeV) ok = false;
         if(tipoObjetoV && row['tipo objeto'] !== tipoObjetoV) ok = false;
         if(statusV && row['Status atual'] !== statusV) ok = false;
+        if(anoV && row['ANO DO CONTRATO'] !== anoV) ok = false;
+        // Filtro por datas de homologação
+        if(dateIniV) {
+          let d = parseDate(row['Data homologação']);
+          let dIni = new Date(dateIniV+'T00:00:00');
+          if(!d || d < dIni) ok = false;
+        }
+        if(dateFimV) {
+          let d = parseDate(row['Data homologação']);
+          let dFim = new Date(dateFimV+'T23:59:59');
+          if(!d || d > dFim) ok = false;
+        }
         if(searchV) {
           const matchAny = columns.some(col => (row[col] || "").toLowerCase().includes(searchV));
           if (!matchAny) ok = false;
         }
         return ok;
       });
+
       atualizarTabela();
       atualizarKPI();
       atualizarGraficos();
+      atualizarTimelineSelect();
+    }
+
+    function parseDate(str) {
+      if(!str) return null;
+      if(str.includes('/')) {
+        const [d,m,y] = str.split('/');
+        return new Date(`${y}-${m}-${d}T00:00:00`);
+      }
+      if(str.match(/^\d{4}-\d{2}-\d{2}/)) {
+        return new Date(str);
+      }
+      return null;
     }
 
     function atualizarKPI() {
       document.getElementById('kpi-total-processos').textContent = filteredRows.length;
-      let modalidades = unique(filteredRows.map(r=>r['Modalidade'])).length;
-      let status = unique(filteredRows.map(r=>r['Status atual'])).length;
-      document.getElementById('kpi-total-modalidades').textContent = modalidades;
-      document.getElementById('kpi-total-status').textContent = status;
+      // Tempo médio total do processo
+      let tempos = filteredRows.map(r => parseFloat((r['Tempo total Processo (soma de todos os tempos)'] || "0").replace(",",".").replace(" dias","")));
+      let somaTempo = tempos.reduce((a,b)=>a+b,0);
+      let tempoMedio = filteredRows.length>0 ? (somaTempo/filteredRows.length).toFixed(1) : "0";
+      document.getElementById('kpi-tempo-medio').textContent = tempoMedio;
+      // Valor total contratado
+      let valores = filteredRows.map(r => parseFloat((r['VALOR CONTRATADO'] || "0").replace(/\./g,'').replace(',','.')));
+      let somaValor = valores.reduce((a,b)=>a+b,0);
+      document.getElementById('kpi-total-contratado').textContent = somaValor.toLocaleString('pt-BR',{minimumFractionDigits:2});
+      // Processos por ano do contrato (ano filtrado, se tiver)
+      const anoV = document.getElementById('ano-filter').value;
+      let processosAno = filteredRows.filter(r=>anoV ? r['ANO DO CONTRATO']===anoV : true).length;
+      document.getElementById('kpi-total-ano').textContent = processosAno;
     }
 
     function atualizarTabela() {
@@ -276,6 +348,7 @@
         document.getElementById('no-data-msg').style.display = "none";
         document.getElementById('table-div').style.display = "";
       }
+      // Mostra as principais colunas + botão detalhes
       let colunasPrincipais = [
         'Modalidade',
         'número',
@@ -284,33 +357,24 @@
         'artigo',
         'inciso',
         'valor contratado',
-        'DIFERENÇA VALOR ESTIMADO COM CONTRATADO'
+        'DIFERENÇA VALOR ESTIMADO COM CONTRATADO',
+        'ANO DO CONTRATO'
       ];
       let ths = colunasPrincipais.map(col => `<th>${col}</th>`).join('') + `<th></th>`;
       thead.innerHTML = `<tr>${ths}</tr>`;
       filteredRows.forEach((row, idx) => {
-        let tds = colunasPrincipais.map(col => {
-          let val = row[col] || "-";
-          if (col === 'DIFERENÇA VALOR ESTIMADO COM CONTRATADO') {
-            let valorEstimado = parseFloat((row['valor estimado'] || "0").replace(/\./g, '').replace(',', '.'));
-            let valorContratado = parseFloat((row['valor contratado'] || "0").replace(/\./g, '').replace(',', '.'));
-            let diff = valorContratado - valorEstimado;
-            let diffPerc = valorEstimado > 0 ? ((diff / valorEstimado) * 100).toFixed(2) : '-';
-            val += diffPerc !== '-' ? ` (${diffPerc}%)` : '';
-          }
-          return `<td>${val}</td>`;
-        }).join('');
+        let tds = colunasPrincipais.map(col => row[col] || "-").join('');
         tds += `<td><button class="btn btn-outline-primary btn-sm" onclick="verDetalhes(${idx})">Ver detalhes</button></td>`;
         tbody.innerHTML += `<tr>${tds}</tr>`;
       });
     }
 
     function atualizarGraficos() {
-      let modalidades = {}, status = {};
+      // Modalidade
+      let modalidades = {};
       filteredRows.forEach(r => {
         let m = r['Modalidade'];
         if(m) modalidades[m] = (modalidades[m]||0)+1;
-        let s = r['Status atual']; if(s) status[s] = (status[s]||0)+1;
       });
       let mLabels = Object.keys(modalidades), mVals = Object.values(modalidades);
       let mColors = mLabels.map((_,i)=>["#4285F4","#EA4335","#FBBC05","#34A853","#AB47BC","#00B8D4","#F4511E","#FF7043","#8D6E63"][i%9]);
@@ -320,6 +384,11 @@
         data: { labels: mLabels, datasets: [{ data: mVals, backgroundColor: mColors }] },
         options: { responsive:true, plugins:{legend:{position:'bottom'}} }
       });
+      // Status
+      let status = {};
+      filteredRows.forEach(r => {
+        let s = r['Status atual']; if(s) status[s] = (status[s]||0)+1;
+      });
       let sLabels = Object.keys(status), sVals = Object.values(status);
       let sColors = sLabels.map((_,i)=>["#007bff","#198754","#dc3545","#fd7e14","#6c757d","#0dcaf0","#ffc107","#d63384","#20c997"][i%9]);
       if(chartStatus) chartStatus.destroy();
@@ -327,6 +396,100 @@
         type: 'pie',
         data: { labels: sLabels, datasets: [{ data: sVals, backgroundColor: sColors }] },
         options: { responsive:true, plugins:{legend:{position:'bottom'}} }
+      });
+      // Processos por ano do contrato
+      let anos = {};
+      filteredRows.forEach(r => {
+        let a = r['ANO DO CONTRATO']; if(a) anos[a] = (anos[a]||0)+1;
+      });
+      let aLabels = Object.keys(anos), aVals = Object.values(anos);
+      let aColors = aLabels.map((_,i)=>["#AB47BC","#007bff","#FBBC05","#34A853","#F4511E","#FF7043","#8D6E63","#EA4335","#00B8D4"][i%9]);
+      if(chartAno) chartAno.destroy();
+      chartAno = new Chart(document.getElementById('chart-ano'), {
+        type: 'bar',
+        data: { labels: aLabels, datasets: [{ label:'Processos', data: aVals, backgroundColor: aColors }] },
+        options: { responsive:true, plugins:{legend:{display:false}}, scales:{y:{beginAtZero:true}} }
+      });
+    }
+
+    function atualizarTimelineSelect() {
+      const select = document.getElementById('timeline-process-select');
+      select.innerHTML = '';
+      filteredRows.forEach((row, idx) => {
+        let label = `${row['Modalidade'] || ''} ${row['número'] || ''} - ${row['Objeto'] || ''}`;
+        select.innerHTML += `<option value="${idx}">${label}</option>`;
+      });
+      if(filteredRows.length > 0) {
+        select.value = 0;
+        atualizarTimeline();
+      } else {
+        if(chartTimeline) chartTimeline.destroy();
+      }
+    }
+
+    document.getElementById('timeline-process-select').addEventListener('change', atualizarTimeline);
+
+    function atualizarTimeline() {
+      const select = document.getElementById('timeline-process-select');
+      if(select.value === "" || filteredRows.length === 0) {
+        if(chartTimeline) chartTimeline.destroy();
+        return;
+      }
+      const row = filteredRows[parseInt(select.value)];
+      // Datas principais
+      let datasLabels = [
+        'Data vinculação (licitacon)',
+        'Data início elaboração',
+        'Data envio PME',
+        'Data Retorno PME',
+        'Data Publicação edital',
+        'Data abertura',
+        'Data homologação',
+        'data assinatura contrato/envio empenho',
+        'Data da adjudicação',
+        'data Julgamento'
+      ];
+      let datas = datasLabels.map(l => parseDate(row[l]));
+      let labels = datasLabels.map((l,i) => datas[i] ? l : null).filter(Boolean);
+      let datasFiltradas = datas.map((d,i)=>d?d:null).filter(Boolean);
+      // Monta gráfico
+      if(chartTimeline) chartTimeline.destroy();
+      chartTimeline = new Chart(document.getElementById('chart-timeline'), {
+        type:'line',
+        data:{
+          labels:labels,
+          datasets:[{
+            label:'Linha do Tempo',
+            data:datasFiltradas.map(d=>d.getTime()),
+            borderColor:'#4285F4',
+            backgroundColor:'rgba(66,133,244,0.1)',
+            tension:0.1
+          }]
+        },
+        options:{
+          responsive:true,
+          plugins:{
+            legend:{display:false},
+            tooltip:{
+              callbacks:{
+                label: function(ctx){
+                  let dt = new Date(ctx.raw);
+                  return dt.toLocaleDateString('pt-BR');
+                }
+              }
+            }
+          },
+          scales:{
+            y:{
+              display:false
+            },
+            x:{
+              ticks:{
+                autoSkip:false
+              }
+            }
+          }
+        }
       });
     }
 
