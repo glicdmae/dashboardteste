@@ -149,7 +149,7 @@
 
     window.verDetalhes = function(idx) {
       const row = filteredRows[idx];
-      let html = <table class="table table-bordered"><tbody>;
+      let html = `<table class="table table-bordered"><tbody>`;
       columns.forEach(col => {
         let val = row[col] || "-";
         if (col === 'DIFERENÇA VALOR ESTIMADO COM CONTRATADO') {
@@ -159,9 +159,9 @@
           let diffPerc = valorEstimado > 0 ? ((diff / valorEstimado) * 100).toFixed(2) : '-';
           val += diffPerc !== '-' ? ` (${diffPerc}%)` : '';
         }
-        html += <tr><th style="width:220px">${col}</th><td>${val}</td></tr>;
+        html += `<tr><th style="width:220px">${col}</th><td>${val}</td></tr>`;
       });
-      html += </tbody></table>;
+      html += `</tbody></table>`;
       document.getElementById('detalhes-modal-body').innerHTML = html;
       let modal = new bootstrap.Modal(document.getElementById('detalhesModal'));
       modal.show();
@@ -176,7 +176,7 @@
       document.getElementById('no-data-msg').style.display = 'none';
       document.getElementById('table-div').style.display = 'none';
       try {
-        const url = https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}?key=${API_KEY};
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(SHEET_NAME)}?key=${API_KEY}`;
         const resp = await fetch(url);
         const data = await resp.json();
         if (!data.values || data.values.length < 2) throw new Error("Nenhum dado retornado");
@@ -215,17 +215,17 @@
 
     function preencherFiltros() {
       const modalidadeFilter = document.getElementById('modalidade-filter');
-      modalidadeFilter.innerHTML = <option value="">Todas</option>;
+      modalidadeFilter.innerHTML = `<option value="">Todas</option>`;
       let modalidadesUnicas = unique(allRows.map(r=>r['Modalidade']));
-      modalidadesUnicas.forEach(m => modalidadeFilter.innerHTML += <option value="${m}">${m}</option>);
+      modalidadesUnicas.forEach(m => modalidadeFilter.innerHTML += `<option value="${m}">${m}</option>`);
       const statusFilter = document.getElementById('status-filter');
-      statusFilter.innerHTML = <option value="">Todos</option>;
+      statusFilter.innerHTML = `<option value="">Todos</option>`;
       let statusUnicos = unique(allRows.map(r=>r['Status atual']));
-      statusUnicos.forEach(s => statusFilter.innerHTML += <option value="${s}">${s}</option>);
+      statusUnicos.forEach(s => statusFilter.innerHTML += `<option value="${s}">${s}</option>`);
       const tipoObjetoFilter = document.getElementById('tipoobjeto-filter');
-      tipoObjetoFilter.innerHTML = <option value="">Todos</option>;
+      tipoObjetoFilter.innerHTML = `<option value="">Todos</option>`;
       let tipoObjetoUnicos = unique(allRows.map(r=>r['tipo objeto']));
-      tipoObjetoUnicos.forEach(o => tipoObjetoFilter.innerHTML += <option value="${o}">${o}</option>);
+      tipoObjetoUnicos.forEach(o => tipoObjetoFilter.innerHTML += `<option value="${o}">${o}</option>`);
     }
 
     ['modalidade-filter','tipoobjeto-filter','status-filter'].forEach(id => {
@@ -286,8 +286,8 @@
         'valor contratado',
         'DIFERENÇA VALOR ESTIMADO COM CONTRATADO'
       ];
-      let ths = colunasPrincipais.map(col => <th>${col}</th>).join('') + <th></th>;
-      thead.innerHTML = <tr>${ths}</tr>;
+      let ths = colunasPrincipais.map(col => `<th>${col}</th>`).join('') + `<th></th>`;
+      thead.innerHTML = `<tr>${ths}</tr>`;
       filteredRows.forEach((row, idx) => {
         let tds = colunasPrincipais.map(col => {
           let val = row[col] || "-";
@@ -298,10 +298,10 @@
             let diffPerc = valorEstimado > 0 ? ((diff / valorEstimado) * 100).toFixed(2) : '-';
             val += diffPerc !== '-' ? ` (${diffPerc}%)` : '';
           }
-          return <td>${val}</td>;
+          return `<td>${val}</td>`;
         }).join('');
-        tds += <td><button class="btn btn-outline-primary btn-sm" onclick="verDetalhes(${idx})">Ver detalhes</button></td>;
-        tbody.innerHTML += <tr>${tds}</tr>;
+        tds += `<td><button class="btn btn-outline-primary btn-sm" onclick="verDetalhes(${idx})">Ver detalhes</button></td>`;
+        tbody.innerHTML += `<tr>${tds}</tr>`;
       });
     }
 
@@ -338,7 +338,7 @@
       doc.setFontSize(18);
       doc.text('Relatório de Processos Filtrados', 14, 14);
       doc.setFontSize(12);
-      doc.text(Total de Processos: ${filteredRows.length}, 14, 22);
+      doc.text(`Total de Processos: ${filteredRows.length}`, 14, 22);
 
       const cols = columns;
       const data = filteredRows.map(row =>
